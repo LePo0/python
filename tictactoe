@@ -1,0 +1,1186 @@
+import sys
+from PyQt5.QtWidgets import QApplication,QGridLayout,QComboBox,QCheckBox,QMessageBox, QHBoxLayout, QLabel, QWidget, QMainWindow, QPushButton,QMessageBox, QVBoxLayout
+from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtGui import QPixmap, QColor, QPalette, QIcon
+
+    
+tableau=[0,0,0,0,0,0,0,0,0]
+tableau1=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+mode_jeu=0
+croix='X'
+rond='O'
+item='X'
+coups=0
+
+def maximum(L):
+    maxi=L[0]
+    pos=0
+    for i in range( 1,len(L)):
+        if L[i]>maxi:
+            pos=i
+            maxi=L[i]
+    return pos
+
+#une focntion minimum renvoyant la position du minimum dans une liste avec le minimum>0
+def minimum(L):
+    mini=1000
+    pos=0
+    for i in range(0,len(L)):
+        if L[i]<mini and L[i]!=0:
+            mini=L[i]
+            pos=i
+    return pos  
+
+def victoire(icon,tableau):
+    if (tableau[0] == icon and tableau[1] == icon and tableau[2] == icon) or \
+       (tableau[3] == icon and tableau[4] == icon and tableau[5] == icon) or \
+       (tableau[6] == icon and tableau[7] == icon and tableau[8] == icon) or \
+       (tableau[0] == icon and tableau[3] == icon and tableau[6] == icon) or \
+       (tableau[1] == icon and tableau[4] == icon and tableau[7] == icon) or \
+       (tableau[2] == icon and tableau[5] == icon and tableau[8] == icon) or \
+       (tableau[0] == icon and tableau[4] == icon and tableau[8] == icon) or \
+       (tableau[2] == icon and tableau[4] == icon and tableau[6] == icon):
+        return True
+    else:
+        return False
+
+def victoire1(icon,tableau):
+    if (tableau[0] == icon and tableau[1] == icon and tableau[2] == icon and tableau[3] == icon) or \
+       (tableau[6] == icon and tableau[4] == icon and tableau[5] == icon and tableau[7] == icon) or \
+       (tableau[9] == icon and tableau[10] == icon and tableau[8] == icon and tableau[11] == icon) or \
+       (tableau[12] == icon and tableau[13] == icon and tableau[14] == icon and tableau[15] == icon) or \
+       (tableau[0] == icon and tableau[5] == icon and tableau[10] == icon and tableau[15] == icon) or \
+       (tableau[0] == icon and tableau[4] == icon and tableau[8] == icon and tableau[12] == icon) or \
+       (tableau[1] == icon and tableau[5] == icon and tableau[9] == icon and tableau[13] == icon) or \
+       (tableau[2] == icon and tableau[6] == icon and tableau[10] == icon and tableau[14] == icon) or \
+       (tableau[3] == icon and tableau[7] == icon and tableau[11] == icon and tableau[15] == icon) or\
+       (tableau[3] == icon and tableau[6] == icon and tableau[9] == icon and tableau[12] == icon)   :
+        return True
+    else:
+        return False
+
+def choix_IA_3(icon1,icon2):
+    choix_case=[]
+    
+    for i in range(0,9): #simulation de la 1ere case jouee par l'IA
+        if tableau[i] == 0:
+            tableau[i] = icon1
+            choix_case.append([i,[0]])
+            #print(tableau)
+            if victoire(icon1,tableau):
+                choix_case[-1][1]=1000
+                break
+            for j in range(0,9):#simulation de la 1ere case jouee par l'adversaire
+                #if choix_case[-1][1]==0:
+                if tableau[j] == 0:
+                    tableau[j]=icon2
+                    if victoire(icon2,tableau):
+                        choix_case[-1][1]=-1000
+                        tableau[j]=0
+                        break
+                                                    
+                    else :
+                        for k in range(0,9):#simulation de la 2e case jouee par l'IA
+                            if tableau[k] == 0 :
+                                tableau[k] = icon1
+                                if victoire(icon1,tableau):
+                                    #print(choix_case)
+                                    choix_case[-1][1].append(200)
+                                    pass
+                                for n in range(0,9):#simulation de la 2e case jouee par l'adversaire
+                                    if tableau[n]==0:
+                                        tableau[n]=icon2
+                                        if victoire(icon2,tableau):
+                                            choix_case[-1][1].append(-200)
+                                        
+                                        else :
+                                            for x in range(0,9): #simulation de la 3e case jouee par l'IA
+                                                if tableau[x]==0:
+                                                    tableau[x]=icon1
+                                                    if victoire(icon1,tableau):
+                                                        choix_case[-1][1].append(50)
+                                                        pass
+                                                    for y in range(0,9): #simulation de la 3e case jouee par l'adversire
+                                                        if tableau[y]==0:
+                                                            tableau[y]=icon2
+                                                            if victoire(icon2,tableau):
+                                                                choix_case[-1][1].append(-50)
+                                                            else :
+                                                                choix_case[-1][1].append(0)
+                                                            tableau[y]=0
+                                                    tableau[x]=0
+                                        tableau[n]=0
+                                tableau[k]=0                        
+                    tableau[j]=0
+            tableau[i]=0
+            
+
+    #print(choix_case)
+
+    bon_choix=[0,0,0,0,0,0,0,0,0]
+    choix_nul=[0,0,0,0,0,0,0,0,0]
+    mauvais_choix=[0,0,0,0,0,0,0,0,0]
+    pas_perdre=[0,0,0,0,0,0,0,0,0]
+    #cas_perdant=[0,0,0,0,0,0,0,0,0]
+    case_choisie=1000
+
+    
+    for k in choix_case:
+        if type(k[-1]) != list:
+            #print(k[-1])
+            if k[-1]>0:
+                bon_choix[k[0]]+=k[-1]
+            elif k[-1]<0:
+                mauvais_choix[k[0]]+=(k[-1])
+            elif k[-1]==0:
+                choix_nul[k[0]]+=1
+        
+        else:
+            for n in k[1]:
+                if n>0:
+                    bon_choix[k[0]]+=1
+                elif n<0:
+                    mauvais_choix[k[0]]+=1
+                elif n==0:
+                    choix_nul[k[0]]+=1
+    
+    for n in range(len(mauvais_choix)):
+        if mauvais_choix[n]==0:
+            pas_perdre[n]=1
+    for l in range(len(pas_perdre)):
+        if pas_perdre[l]>0:
+            if bon_choix[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+
+            elif choix_nul[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+
+    #print("bon choix = ",bon_choix)
+    #print("mauvais choix = ", mauvais_choix)
+    #print("choix_nul = ", choix_nul)
+                
+    if case_choisie==1000:           
+        if bon_choix!=[0,0,0,0,0,0,0,0,0]:
+            
+            #print(bon_choix)
+            intuition=maximum(bon_choix)
+            liste_intuition=[intuition]
+            for i in range(len(bon_choix)):
+                if i!=intuition:
+                    if bon_choix[i]==bon_choix[intuition]:
+                        liste_intuition.append(i)
+            
+            if len(liste_intuition)>=2:
+                meilleur=10000
+                case=0
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=mauvais_choix[liste_intuition[n]]
+                        case=liste_intuition[n]
+                        print(meilleur)
+                case_choisie=case
+            else :
+                case_choisie=maximum(bon_choix)
+                ##print(case_choisie)
+            
+            
+        elif choix_nul!=[0,0,0,0,0,0,0,0,0]:
+            #print(choix_nul)
+            intuition=maximum(choix_nul)
+            liste_intuition=[intuition]
+            for i in range(len(choix_nul)):
+                if i!=intuition:
+                    if choix_nul[i]==choix_nul[intuition]:
+                        liste_intuition.append(i)
+            
+            if len(liste_intuition)>=2:
+                meilleur=10000
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=liste_intuition[n]
+
+                #print(meilleur)
+                case_choisie=meilleur
+            else :
+                case_choisie=maximum(choix_nul)
+
+        else :
+            case_choisie=minimum(mauvais_choix)
+    
+    #print(case_choisie)
+    tableau[case_choisie]=icon1
+    
+    return case_choisie
+
+def choix_IA_2(icon1,icon2):
+    choix_case=[]
+    
+    for i in range(0,9):#simulation de la 1ere case jouee par l'IA
+        if tableau[i] == 0:
+            tableau[i] = icon1
+            choix_case.append([i,[0]])
+            #print(tableau)
+            if victoire(icon1,tableau):
+                choix_case[-1][1]=1000
+                break
+            for j in range(0,9):#simulation de la 1ere case jouee par l'adversaire
+                #if choix_case[-1][1]==0:
+                if tableau[j] == 0:
+                    tableau[j]=icon2
+                    if victoire(icon2,tableau):
+                        choix_case[-1][1]=-1000
+                        break                                                    
+                    else :
+                        for k in range(0,9):#simulation de la 2e case jouee par l'IA
+                            if tableau[k] == 0 :
+                                tableau[k] = icon1
+                                if victoire(icon1,tableau):
+                                    choix_case[-1][1].append(200)
+                                    pass
+                                for n in range(0,9): #simulation de la 2e case jouee par l'adversaire
+                                    if tableau[n]==0:
+                                        tableau[n]=icon2
+                                        if victoire(icon2,tableau):
+                                            choix_case[-1][1].append(-200)
+                                        
+                                        else :
+                                            choix_case[-1][1].append(0)
+                                    tableau[n]=0
+                            tableau[k]=0                        
+                tableau[j]=0
+        tableau[i]=0
+            
+
+    #print(choix_case)
+    
+    #on definie des liste qui vont contenir selon la position dans la liste
+    #le nombre de victoire,defaite,match nul possible
+    bon_choix=[0,0,0,0,0,0,0,0,0]
+    choix_nul=[0,0,0,0,0,0,0,0,0]
+    mauvais_choix=[0,0,0,0,0,0,0,0,0]
+    pas_perdre=[0,0,0,0,0,0,0,0,0]
+    case_choisie=1000
+    
+#pour chaque scenario on regarde la 1ere case et on ajoute à  la liste
+#correspondante +1 exemple bon_choix[0]+=1 signifie qu'un scenario pour
+#lequel la première case choisie est la case 0 mène à  une victoire
+    
+    for k in choix_case:
+        if type(k[-1]) != list:
+            #print(k[-1])
+            if k[-1]>0:
+                bon_choix[k[0]]+=k[-1]
+            elif k[-1]<0:
+                mauvais_choix[k[0]]+=(k[-1])
+            elif k[-1]==0:
+                choix_nul[k[0]]+=1
+        
+        else:
+            for n in k[1]:
+                if n>0:
+                    bon_choix[k[0]]+=1
+                elif n<0:
+                    mauvais_choix[k[0]]+=1
+                elif n==0:
+                    choix_nul[k[0]]+=1
+                
+    for n in range(len(mauvais_choix)):
+        if mauvais_choix[n]==0:
+            pas_perdre[n]=1
+    for l in range(len(pas_perdre)):
+        if pas_perdre[l]>0:
+            if bon_choix[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+
+            elif choix_nul[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+                
+    if case_choisie==1000:  
+        if bon_choix!=[0,0,0,0,0,0,0,0,0]:
+            
+            #Il se peut qu'il y est plusieurs choix menant à  une victoire
+            #mais dans certains cas ces choix peuvent aussi mene à  une defaite 
+            #Nous allons donc comparer les choix menant au maximum de chance de
+            #victoire et choisir celui qui à  le moins de chance de defaite
+
+            intuition=maximum(bon_choix)
+            liste_intuition=[intuition]
+            for i in range(len(bon_choix)):
+                if i!=intuition:
+                    if bon_choix[i]==bon_choix[intuition]:
+                        liste_intuition.append(i)
+            
+            if len(liste_intuition)>=2:
+                meilleur=10000
+                case=0
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=mauvais_choix[liste_intuition[n]]
+                        case=liste_intuition[n]
+                        #print(meilleur)
+                case_choisie=case
+            else :
+                case_choisie=maximum(bon_choix)
+                
+        elif choix_nul!=[0,0,0,0,0,0,0,0,0]:
+            #print(choix_nul)
+            intuition=maximum(choix_nul)
+            liste_intuition=[intuition]
+            for i in range(len(choix_nul)):
+                if i!=intuition:
+                    if choix_nul[i]==choix_nul[intuition]:
+                        liste_intuition.append(i)            
+            if len(liste_intuition)>=2:
+                meilleur=10000
+                case=0
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=mauvais_choix[liste_intuition[n]]
+                        case=liste_intuition[n]            
+                case_choisie=case
+            else :
+                case_choisie=maximum(choix_nul)
+            
+        else :
+            case_choisie=minimum(mauvais_choix)
+            
+    tableau[case_choisie]=icon1
+        
+    return case_choisie
+
+def choix_IA_4(icon1,icon2):  
+    choix_case=[]
+    
+    for i in range(0,16): #simulation de la 1ere case jouee par l'IA
+        if tableau1[i] == 0:
+            tableau1[i] = icon1
+            choix_case.append([i,[0]])
+            
+            if victoire1(icon1,tableau1):
+                choix_case[-1][1]=1000
+                break
+            for j in range(0,16):#simulation de la 1ere case jouee par l'adversaire
+                #if choix_case[-1][1]==0:
+                if tableau1[j] == 0:
+                    tableau1[j]=icon2
+                    if victoire1(icon2,tableau1):
+                        choix_case[-1][1]=-1000
+                        tableau1[j]=0
+                        break
+                                                    
+                    else :
+                        for k in range(0,16):#simulation de la 2e case jouee par l'IA
+                            if tableau1[k] == 0 :
+                                tableau1[k] = icon1
+                                if victoire1(icon1,tableau1):
+                                    #print(choix_case)
+                                    choix_case[-1][1].append(200)
+                                    pass
+                                for n in range(0,16):#simulation de la 2e case jouee par l'adversaire
+                                    if tableau1[n]==0:
+                                        tableau1[n]=icon2
+                                        if victoire1(icon2,tableau1):
+                                            choix_case[-1][1].append(-200)
+                                        
+                                        else :
+                                            for x in range(0,16): #simulation de la 3e case jouee par l'IA
+                                                if tableau1[x]==0:
+                                                    tableau1[x]=icon1
+                                                    if victoire1(icon1,tableau1):
+                                                        choix_case[-1][1].append(50)
+                                                        pass
+                                                    for y in range(0,16): #simulation de la 3e case jouee par l'adversire
+                                                        if tableau1[y]==0:
+                                                            tableau1[y]=icon2
+                                                            if victoire1(icon2,tableau1):
+                                                                choix_case[-1][1].append(-50)
+                                                            else :
+                                                                choix_case[-1][1].append(0)
+                                                            tableau1[y]=0
+                                                    tableau1[x]=0
+                                        tableau1[n]=0
+                                tableau1[k]=0                        
+                    tableau1[j]=0
+            tableau1[i]=0
+            
+
+    #print(choix_case)
+
+    bon_choix=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    choix_nul=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    mauvais_choix=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    pas_perdre=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    #cas_perdant=[0,0,0,0,0,0,0,0,0]
+    case_choisie=1000
+
+    
+    for k in choix_case:
+        if type(k[-1]) != list:
+            #print(k[-1])
+            if k[-1]>0:
+                bon_choix[k[0]]+=k[-1]
+            elif k[-1]<0:
+                mauvais_choix[k[0]]+=(k[-1])
+            elif k[-1]==0:
+                choix_nul[k[0]]+=1
+        
+        else:
+            for n in k[1]:
+                if n>0:
+                    bon_choix[k[0]]+=1
+                elif n<0:
+                    mauvais_choix[k[0]]+=1
+                elif n==0:
+                    choix_nul[k[0]]+=1
+    
+    for n in range(len(mauvais_choix)):
+        if mauvais_choix[n]==0:
+            pas_perdre[n]=1
+    for l in range(len(pas_perdre)):
+        if pas_perdre[l]>0:
+            if bon_choix[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+
+            elif choix_nul[l]>0:
+                case_choisie=l
+                #print(case_choisie)
+
+    #print("bon choix = ",bon_choix)
+    #print("mauvais choix = ", mauvais_choix)
+    #print("choix_nul = ", choix_nul)
+                
+    if case_choisie==1000:           
+        if bon_choix!=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]:
+            
+            #print(bon_choix)
+            intuition=maximum(bon_choix)
+            liste_intuition=[intuition]
+            for i in range(len(bon_choix)):
+                if i!=intuition:
+                    if bon_choix[i]==bon_choix[intuition]:
+                        liste_intuition.append(i)
+            
+            if len(liste_intuition)>=2:
+                meilleur=1000000
+                case=0
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=mauvais_choix[liste_intuition[n]]
+                        case=liste_intuition[n]
+                        print(meilleur)
+                case_choisie=case
+            else :
+                case_choisie=maximum(bon_choix)
+                ##print(case_choisie)
+            
+            
+        elif choix_nul!=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]:
+            #print(choix_nul)
+            intuition=maximum(choix_nul)
+            liste_intuition=[intuition]
+            for i in range(len(choix_nul)):
+                if i!=intuition:
+                    if choix_nul[i]==choix_nul[intuition]:
+                        liste_intuition.append(i)
+            
+            if len(liste_intuition)>=2:
+                meilleur=1000000
+                for n in range(len(liste_intuition)):
+                    if mauvais_choix[liste_intuition[n]] < meilleur and mauvais_choix[liste_intuition[n]] != 0:
+                        meilleur=liste_intuition[n]
+
+                #print(meilleur)
+                case_choisie=meilleur
+            else :
+                case_choisie=maximum(choix_nul)
+
+        else :
+            case_choisie=minimum(mauvais_choix)
+    
+    #print(case_choisie)
+    tableau1[case_choisie]=icon1
+    
+    return case_choisie
+
+def choix_IA_1(icon1,icon2,suite=0):
+    choix_case=[]
+    #la liste choix case va permettre d'attribuer au premier choix de case la
+    #valeur de defaite, victoire ou match nul
+    
+    for i in range(0,9): #simulation de la 1ere case jouee par l'IA
+        if tableau[i] == 0:
+            tableau[i] = icon1
+            choix_case.append([i,0])
+            #print(tableau)
+            if victoire(icon1,tableau):
+                choix_case[-1][1]+=3
+                break
+            for j in range(0,9):#simulation de la 1ere case jouee par l'adversaire
+               
+                if tableau[j] == 0:
+                    tableau[j]=icon2
+                    if victoire(icon2,tableau):
+                        choix_case[-1][1]-=3
+                                                    
+                    else :
+                        choix_case[-1][1]+=0
+                    tableau[j]=0
+            tableau[i]=0
+    if suite==1:
+        return choix_case
+    #print(choix_case)
+    bon_choix=[0,0,0,0,0,0,0,0,0]
+    choix_nul=[0,0,0,0,0,0,0,0,0]
+    mauvais_choix=[0,0,0,0,0,0,0,0,0]
+    #on definie des liste qui vont contenir selon la position dans la liste
+    #le nombre de victoire,defaite,match nul possible
+        
+    case_choisie=1000 
+    
+    #pour chaque scenario on regarde la 1ere case et on ajoute à  la liste
+    #correspondante +1 exemple bon_choix[0]+=1 signifie qu'un scenario pour
+    #lequel la première case choisie est la case 0 mène à  une victoire
+    
+    for k in choix_case:
+        if k[-1]==1:
+            bon_choix[k[0]]+=1
+        elif k[-1]<0:
+            mauvais_choix[k[0]]=abs(k[-1])
+        elif k[-1]==0:
+            choix_nul[k[0]]+=1
+            
+    if bon_choix!=[0,0,0,0,0,0,0,0,0]:
+        case_choisie=maximum(bon_choix)
+        
+    elif choix_nul!=[0,0,0,0,0,0,0,0,0]:
+        case_choisie=maximum(choix_nul)
+        #print(case_choisie)
+        
+    else :
+        #print(mauvais_choix)
+        case_choisie=minimum(mauvais_choix)
+        #print(case_choisie)
+            
+    tableau[case_choisie]=icon1
+    
+    return case_choisie
+
+def reset_tableau():
+    for i in range(len(tableau)):
+        tableau[i]=0
+
+def suite_ideale(icon1,icon2):
+    suite=[]
+    adversaire=[]
+    for i in range(len(tableau)):
+        if tableau[i]==0:
+            tableau[i]=icon1
+            suite.append(i+1)
+            if victoire(icon1,tableau):
+                tableau[i]=0
+                return affichertableau(),print('vous devez jouer ',suite,' et l adversaire ', adversaire)
+            else :
+                for j in range(len(tableau)):
+                    if tableau[j]==0:
+                        tableau[j]=icon2
+                        if victoire(icon2,tableau):                         
+                            suite.pop()
+                            tableau[j]=0
+                            break
+                        else :
+                            adversaire.append(j+1)
+                            for k in range(len(tableau)):
+                                if tableau[k]==0:
+                                    tableau[k]=icon1
+                                    suite.append(k+1)
+                                    if victoire(icon1,tableau):
+                                        tableau[i]=0
+                                        tableau[j]=0
+                                        tableau[k]=0
+                                        return affichertableau(),print('vous devez jouer ',suite,' et l adversaire ', adversaire)
+                                    else :
+                                        for n in range(0,9):#simulation de la 2e case jouee par l'adversaire
+                                            if tableau[n]==0:
+                                                tableau[n]=icon2
+                                                if victoire(icon2,tableau):
+                                                    suite.pop()
+                                                    tableau[n]=0
+                                                    break
+                                                else :
+                                                    adversaire.append(n+1)
+                                                    for x in range(0,9): #simulation de la 3e case jouee par l'IA
+                                                        if tableau[x]==0:
+                                                            tableau[x]=icon1
+                                                            suite.append(x+1)
+                                                            if victoire(icon1,tableau):
+                                                                tableau[i]=0
+                                                                tableau[j]=0
+                                                                tableau[k]=0
+                                                                tableau[n]=0
+                                                                tableau[x]=0
+                                                                return affichertableau(),print('vous devez jouer ',suite,' et l adversaire ', adversaire)
+                                                            else:
+                                                                for y in range(len(tableau)):
+                                                                    if tableau[y]==0:
+                                                                        tableau[y]=icon2
+                                                                        if victoire(icon2,tableau):
+                                                                            suite.pop()
+                                                                            tableau[y]=0
+                                                                        else:
+                                                                            adversaire.append(y+1)
+                                                                            for t in range(len(tableau)):
+                                                                                if tableau[t]==0:
+                                                                                    tableau[t]=icon1
+                                                                                    suite.append(t+1)
+                                                                                    if victoire(icon1,tableau):                                                                                        
+                                                                                        tableau[i]=0
+                                                                                        tableau[j]=0
+                                                                                        tableau[k]=0
+                                                                                        tableau[n]=0
+                                                                                        tableau[x]=0
+                                                                                        tableau[y]=0
+                                                                                        tableau[t]=0
+                                                                                        return affichertableau(),print('vous devez jouer ',suite,' et l adversaire ', adversaire)
+                                                                                    else :
+                                                                                        for m in range(len(tableau)):
+                                                                                            if tableau[m]==0:
+                                                                                                tableau[m]=icon2
+                                                                                                if victoire(icon2,tableau):
+                                                                                                    suite.pop()
+                                                                                                    tableau[m]=0
+                                                                                                else:
+                                                                                                    adversaire.append(m+1)
+                                                                                                    for p in range(len(tableau)):
+                                                                                                        if tableau[p]==0:
+                                                                                                            tableau[p]=icon1
+                                                                                                            suite.append(p+1)
+                                                                                                            if victoire(icon1,tableau):
+                                                                                                                tableau[i]=0
+                                                                                                                tableau[j]=0
+                                                                                                                tableau[k]=0
+                                                                                                                tableau[n]=0
+                                                                                                                tableau[x]=0
+                                                                                                                tableau[y]=0
+                                                                                                                tableau[t]=0
+                                                                                                                tableau[m]=0
+                                                                                                                tableau[p]=0
+                                                                                                                return affichertableau(),print('vous devez jouer ',suite,' et l adversaire ', adversaire)
+                                                                                                            tableau[p]=0
+                                                                                                tableau[m]=0
+                                                                                    tableau[t]=0
+                                                                        tableau[y]=0
+                                                            tableau[x]=0                                                        
+                                                tableau[n]=0
+                                    tableau[k]=0                        
+                        tableau[j]=0
+            tableau[i]=0            
+        
+    return print('aucune victoire possible')
+
+def affichertableau():
+    row1 = "| {} | {} | {} |".format(tableau[0], tableau[1], tableau[2])
+    row2 = "| {} | {} | {} |".format(tableau[3], tableau[4], tableau[5])
+    row3 = "| {} | {} | {} |".format(tableau[6], tableau[7], tableau[8])
+    
+    print()
+    print(row1)
+    print(row2)
+    print(row3)
+    print()
+    
+class Fenetre(QMainWindow):
+    tableau=[0,0,0,0,0,0,0,0,0]
+    tableau1=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    mode_jeu=0
+    croix='X'
+    rond='O'
+    item='X'
+    nul=True
+    
+    coups=0
+    
+    def __init__(self):
+        
+        super().__init__()        
+        self.setWindowTitle("jeu du morpion")
+        self.accueil = QGridLayout()
+        self.jeu3 = QPushButton('jouer en 3x3')
+        self.jeu4 = QPushButton('jouer en 4x4')
+        self.jeu3.clicked.connect(self.jeu3x3)
+        self.jeu4.clicked.connect(self.jeu4x4)        
+        self.accueil.addWidget(self.jeu3,1,1)
+        self.accueil.addWidget(self.jeu4,1,3)
+        
+        #.acceuil.setSpacing(0)
+        self.window = QWidget()
+        self.window.setFixedSize(500, 100)
+        self.window.setLayout(self.accueil)
+        self.setCentralWidget(self.window)
+    
+    
+    def jeu4x4(self):
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+        #création des boutons de jeu
+        self.buttons1=[]
+        for i in range(4):
+            for j in range(4):
+                button = QPushButton('',self)
+                button.setObjectName(str(i+1)+str(j))
+                button.clicked.connect(self.Clic1)
+                button.setFixedWidth(100)
+                button.setFixedHeight(100)
+                self.layout.addWidget(button,i+1,j+3)
+                self.buttons1.append(button)
+        
+        self.home = QPushButton('Accueil')
+        self.home.clicked.connect(self.BackHome)
+        self.home.setFixedSize(100, 28)
+        self.layout.addWidget(self.home,0,0)
+        
+        self.difficultee = QComboBox(self)
+        self.difficultee.addItem('niveau facile')
+        self.difficultee.addItem('niveau moyen')
+        self.difficultee.addItem('impossible')
+        
+        #bouton pour relancer la partie
+        rejouer1 = QPushButton('Rejouer',self)
+        rejouer1.clicked.connect(self.Play_again1)
+        rejouer1.setFixedSize(100,28)
+        self.layout.addWidget(rejouer1,1,0)
+        
+        #choix du mode de jeu
+        self.mode1 = QComboBox (self)
+        self.mode1.addItem("joueur vs IA")
+        self.mode1.addItem("joueur vs joueur")
+        self.mode1.setFixedSize(100,28)
+        self.layout.addWidget(self.mode1,0,1)                            
+        
+        #message de fin
+        self.messageDeFin1 = QLabel("", self)
+        self.messageDeFin1.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.messageDeFin1, 4, 0, 1, 3)
+        
+        self.coup = QLabel('0')
+        self.item = QLabel('X')
+        
+        self.layout.setSpacing(0)
+        self.widget = QWidget()
+        self.widget.setLayout(self.layout)
+        self.setCentralWidget(self.widget)
+        
+    def BackHome(self):
+        self.setWindowTitle("jeu du morpion")
+        self.accueil = QGridLayout()
+        self.jeu3 = QPushButton('jouer en 3x3')
+        self.jeu4 = QPushButton('jouer en 4x4')
+        self.jeu3.clicked.connect(self.jeu3x3)
+        self.jeu4.clicked.connect(self.jeu4x4)        
+        self.accueil.addWidget(self.jeu3,1,1)
+        self.accueil.addWidget(self.jeu4,1,3)
+        
+        self.window = QWidget()
+        self.window.setFixedSize(500, 100)
+        self.window.setLayout(self.accueil)
+        self.setCentralWidget(self.window)
+    
+    def Play_again1(self):
+        for button in self.buttons1 :
+            button.setIcon(QIcon(''))
+            
+        self.mode1.setEnabled(True)
+        self.item.setText('X')
+        self.coup.setText('0')
+        reset_tableau()
+        self.messageDeFin1.setText("")
+       
+        for button in self.buttons1:
+            button.setEnabled(True)
+            button.setText('')       
+            
+    def Clic1(self):
+        self.mode1.setEnabled(False)
+                
+        if int(self.coup.text())%2 == 0 :
+            self.item.setText('X')
+            image='59254.png'
+        else :
+            self.item.setText('O')
+            image='71397.png'
+        
+       
+        button=self.sender()       
+        #print(self.sender())
+        if button.objectName()=="10":
+            tableau1[0]=self.item.text()
+        elif button.objectName()=="11":
+            tableau1[1]=self.item.text()
+        elif button.objectName()=="12":
+            tableau1[2]=self.item.text()
+        elif button.objectName()=="13":
+            tableau1[3]=self.item.text()
+        elif button.objectName()=="20":
+            tableau1[4]=self.item.text()
+        elif button.objectName()=="21":
+            tableau1[5]=self.item.text()
+        elif button.objectName()=="22":
+            tableau1[6]=self.item.text()
+        elif button.objectName()=="23":
+            tableau1[7]=self.item.text()
+        elif button.objectName()=="30":
+            tableau1[8]=self.item.text()
+        elif button.objectName()=="31":
+            tableau1[9]=self.item.text()
+        elif button.objectName()=="32":
+            tableau1[10]=self.item.text()
+        elif button.objectName()=="33":
+            tableau1[11]=self.item.text()
+        elif button.objectName()=="40":
+            tableau1[12]=self.item.text()
+        elif button.objectName()=="41":
+            tableau1[13]=self.item.text()
+        elif button.objectName()=="42":
+            tableau1[14]=self.item.text()
+        elif button.objectName()=="43":
+            tableau1[15]=self.item.text()
+            
+        button.setIcon(QIcon(image))
+        button.setEnabled(False)
+        #self.checkWin()
+        print(tableau1)
+      
+        if victoire1(self.item.text(),tableau1):
+            
+            self.win()
+            print(tableau1)
+        else :
+
+            if self.check_draw1() == True :
+                return self.chek_draw1()
+            else:  
+                if self.mode1.currentText() == "joueur vs IA" :
+                    self.choix_ordi1('O','X')
+                elif self.mode1.currentText() == "joueur vs joueur":
+                    self.coup.setText(str(int(self.coup.text())+1))
+                    print(self.coup.text())
+        
+
+    def choix_ordi1(self,icon1,icon2):
+        if icon1=='O':
+            image='71397.png'
+        else :
+            image='59254.png'
+        choix=choix_IA_4(icon1,icon2)
+        if choix==0:
+            button=self.buttons1[0]
+        elif choix==1:
+            button=self.buttons1[1]
+        elif choix==2:
+            button=self.buttons1[2]
+        elif choix==3:
+            button=self.buttons1[3]
+        elif choix==4:
+            button=self.buttons1[4]
+        elif choix==5:
+            button=self.buttons1[5]
+        elif choix==6:
+            button=self.buttons1[6]
+        elif choix==7:
+            button=self.buttons1[7]
+        elif choix==8:
+            button=self.buttons1[8]
+        elif choix==9:
+            button=self.buttons1[9]
+        elif choix==10:
+            button=self.buttons1[10]
+        elif choix==11:
+            button=self.buttons1[11]
+        elif choix==12:
+            button=self.buttons1[12]
+        elif choix==13:
+            button=self.buttons1[13]
+        elif choix==14:
+            button=self.buttons1[14]
+        elif choix==15:
+            button=self.buttons1[15]
+            
+        button.setIcon(QIcon(str(image)))
+        print(tableau1)
+        button.setEnabled(False)      
+        if victoire1(icon1,tableau1):
+            self.lose1()
+            print(tableau1)
+        else:
+            self.check_draw1()
+            
+    def win1(self):
+        self.messageDeFin1.setText("Bravo, les "+ self.item.text() +" ont gagné !")
+        for button in self.buttons1:
+            button.setEnabled(False)
+        print(tableau1)
+        self.item.setText('X')
+        self.coup.setText('0')
+        return
+
+    def lose1(self):
+        self.messageDeFin1.setText("Dommage, vous avez perdu !")
+        for button in self.buttons1:
+            button.setEnabled(False)
+        return
+    
+    def check_draw1(self):
+        
+        for i in self.buttons1 :
+            if i.isEnabled() == True :
+                nul=False
+                return
+            else:
+                continue
+        self.messageDeFin1.setText("Match nul.")
+        return True
+    
+    
+    def jeu3x3(self):
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+        #création des boutons de jeu
+        self.buttons=[]
+        for i in range(3):
+            for j in range(3):
+                button = QPushButton('',self)
+                button.setObjectName(str(i+1)+str(j))
+                button.clicked.connect(self.Clic)
+                button.setFixedWidth(100)
+                button.setFixedHeight(100)
+                self.layout.addWidget(button,i+1,j)
+                self.buttons.append(button)
+        
+        self.home = QPushButton('Accueil')
+        self.home.clicked.connect(self.BackHome)
+        self.layout.addWidget(self.home,3,4)
+        
+        
+        #suite idéale
+        self.suiteideale = QCheckBox("afficher une suite idéale")
+        self.suiteideale.setCheckState(0)
+        self.suiteideale.stateChanged.connect(self.state_changed)
+        self.layout.addWidget(self.suiteideale,1,3)
+        
+        #next gen
+        self.NextGen = QCheckBox("afficher les résultats de la prochaine génération")
+        self.NextGen.setCheckState(0)
+        self.NextGen.stateChanged.connect(self.etat_change)
+        self.layout.addWidget(self.NextGen,2,3)
+        
+        #bouton pour relancer la partie
+        rejouer = QPushButton('Rejouer',self)
+        rejouer.clicked.connect(self.Play_again)
+        self.layout.addWidget(rejouer,0,0)
+        
+        #choix du mode de jeu
+        self.mode = QComboBox (self)
+        self.mode.addItem("joueur vs IA")
+        self.mode.addItem("joueur vs joueur")
+        self.layout.addWidget(self.mode,0,2)
+                
+        #choix de la difficultée
+        self.difficultee = QComboBox(self)
+        self.difficultee.addItem('niveau facile')
+        self.difficultee.addItem('niveau moyen')
+        self.difficultee.addItem('impossible')
+        self.layout.addWidget(self.difficultee,0,4)
+        
+        
+        #message de fin
+        self.messageDeFin = QLabel("", self)
+        self.messageDeFin.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.messageDeFin, 4, 0, 1, 3)
+        
+        self.coup = QLabel('0')
+        self.item = QLabel('X')
+        
+        self.layout.setSpacing(0)
+        self.widget = QWidget()
+        self.widget.setLayout(self.layout)
+        self.setCentralWidget(self.widget)
+        
+    def BackHome(self):
+        self.setWindowTitle("jeu du morpion")
+        self.accueil = QGridLayout()
+        self.jeu3 = QPushButton('jouer en 3x3')
+        self.jeu4 = QPushButton('jouer en 4x4')
+        self.jeu3.clicked.connect(self.jeu3x3)
+        self.jeu4.clicked.connect(self.jeu4x4)        
+        self.accueil.addWidget(self.jeu3,1,1)
+        self.accueil.addWidget(self.jeu4,1,3)
+        
+        #.acceuil.setSpacing(0)
+        self.window = QWidget()
+        self.window.setFixedSize(500, 100)
+        self.window.setLayout(self.accueil)
+        self.setCentralWidget(self.window)
+        
+    def etat_change(self):
+        if self.item.text()=='X':
+            print(choix_IA_1('X','O',1))
+            self.NextGen.setEnabled(False)
+        else :
+            print(choix_IA_1('O','X',1))
+            self.NextGen.setEnabled(False)
+        
+    def state_changed(self):
+        suite_ideale('croix','rond')
+        self.suiteideale.setEnabled(False)
+    
+    def Play_again(self):
+        for button in self.buttons :
+            button.setIcon(QIcon(''))
+            
+        self.difficultee.setEnabled(True)
+        self.mode.setEnabled(True)
+        self.item.setText('X')
+        self.coup.setText('0')
+        reset_tableau()
+        self.messageDeFin.setText("")
+        self.NextGen.setEnabled(True)
+        self.suiteideale.setEnabled(True)
+        self.suiteideale.setCheckState(0)
+        self.NextGen.setCheckState(0)
+        for button in self.buttons:
+            button.setEnabled(True)
+            button.setText('')
+    #def mode_de_jeu(self):
+        
+        
+    
+    def Clic(self):
+        self.mode.setEnabled(False)
+        self.difficultee.setEnabled(False)
+        
+        if int(self.coup.text())%2 == 0 :
+            self.item.setText('X')
+            image='59254.png'
+        else :
+            self.item.setText('O')
+            image='71397.png'
+        
+       
+        button=self.sender()       
+        #print(self.sender())
+        if button.objectName()=="10":
+            tableau[0]=self.item.text()
+        elif button.objectName()=="11":
+            tableau[1]=self.item.text()
+        elif button.objectName()=="12":
+            tableau[2]=self.item.text()
+        elif button.objectName()=="20":
+            tableau[3]=self.item.text()
+        elif button.objectName()=="21":
+            tableau[4]=self.item.text()
+        elif button.objectName()=="22":
+            tableau[5]=self.item.text()
+        elif button.objectName()=="30":
+            tableau[6]=self.item.text()
+        elif button.objectName()=="31":
+            tableau[7]=self.item.text()
+        elif button.objectName()=="32":
+            tableau[8]=self.item.text()
+        button.setIcon(QIcon(image))
+        button.setEnabled(False)
+        #self.checkWin()
+        print(tableau)
+        self.suiteideale.setEnabled(True)
+        self.suiteideale.setCheckState(0)
+        self.NextGen.setEnabled(True)
+        self.NextGen.setCheckState(0)
+        if victoire(self.item.text(),tableau):
+            
+            self.win()
+            print(tableau)
+        else :
+            self.suiteideale.setEnabled(True)
+            self.NextGen.setEnabled(True)
+            if self.check_draw() == True :
+                return
+            else:  
+                if self.mode.currentText() == "joueur vs IA" :
+                    self.choix_ordi('O','X')
+                elif self.mode.currentText() == "joueur vs joueur":
+                    self.coup.setText(str(int(self.coup.text())+1))
+                    print(self.coup.text())
+        
+
+    def choix_ordi(self,icon1,icon2):
+        if icon1=='O':
+            image='71397.png'
+        else :
+            image='59254.png'
+        if self.difficultee.currentText()=='niveau facile':
+            choix=choix_IA_1(icon1,icon2)
+        elif self.difficultee.currentText()=='niveau moyen':
+            choix=choix_IA_2(icon1,icon2)
+        elif self.difficultee.currentText() == 'impossible':
+            choix=choix_IA_3(icon1,icon2)
+        if choix==0:
+            button=self.buttons[0]
+        elif choix==1:
+            button=self.buttons[1]
+        elif choix==2:
+            button=self.buttons[2]
+        elif choix==3:
+            button=self.buttons[3]
+        elif choix==4:
+            button=self.buttons[4]
+        elif choix==5:
+            button=self.buttons[5]
+        elif choix==6:
+            button=self.buttons[6]
+        elif choix==7:
+            button=self.buttons[7]
+        elif choix==8:
+            button=self.buttons[8]
+        button.setIcon(QIcon(str(image)))
+        print(tableau)
+        button.setEnabled(False)      
+        if victoire(icon1,tableau):
+            self.lose()
+            print(tableau)
+            
+    def win(self):
+        self.messageDeFin.setText("Bravo, les "+ self.item.text() +" ont gagné !")
+        for button in self.buttons:
+            button.setEnabled(False)
+        print(tableau)
+        self.item.setText('X')
+        self.coup.setText('0')
+        return
+
+    def lose(self):
+        self.messageDeFin.setText("Dommage, vous avez perdu !")
+        for button in self.buttons:
+            button.setEnabled(False)
+        return
+    
+    def check_draw(self):
+        
+        for i in self.buttons :
+            if i.isEnabled() == True :
+                nul=False
+                return
+            else:
+                continue
+        self.messageDeFin.setText("Match nul.")
+        return True
+    
+app = QCoreApplication.instance()
+if app is None:
+    app = QApplication(sys.argv)
+    
+window = Fenetre()
+window.show()
+app.exec_()
